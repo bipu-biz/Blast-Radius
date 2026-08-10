@@ -21,6 +21,11 @@ const user = new Schema({
         minlength:[3,'password should be atleast 3 character long']
     },
 
+    refreshToken: {
+        type: String,
+        default: null
+    },
+
     githubaccesstoken:{
         type:String,
         select:false

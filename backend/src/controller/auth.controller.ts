@@ -29,6 +29,9 @@ export const register = async(req:Request,res:Response,next:NextFunction)=>{
         const accesstoken = generateAccessToken(user._id.toString())
         const refreshtoken = generateRefreshToken(user._id.toString())
 
+        user.refreshToken = refreshtoken
+        await user.save()
+
         res.cookie('refreshtoken',refreshtoken,{
             httpOnly:true,
             secure:process.env.NODE_ENV ==='production',
@@ -39,6 +42,52 @@ export const register = async(req:Request,res:Response,next:NextFunction)=>{
 
         res.status(201).json({
             message:'user registered successfully',
+            accesstoken,
+            user:{
+                id:user._id,
+                name:user.name,
+                email:user.email
+            }
+        })
+    }
+    catch(error){
+        next(error)
+    }
+}
+
+export const login = async(req:Request,res:Response,next:NextFunction)=>{
+    try{
+        const{email,password}=req.body
+        if(!email || !password){
+            return new apiError(401,'email,password are required')
+        }
+
+        const user = await User.findOne({email}).select('+password')
+        if(!user){
+            throw new apiError(404,'user not found')
+        }
+        
+        const match = await bcrypt.compare(password,user.password)
+        if(!match){
+            throw new apiError(401,'invalid credentails')
+        }
+
+        const accesstoken = generateAccessToken(user._id.toString())
+        const refreshtoken = generateRefreshToken(user._id.toString())
+
+        user.refreshToken = refreshtoken
+        await user.save()
+
+        res.cookie('refreshtoken',refreshtoken,{
+            httpOnly:true,
+            secure:process.env.NODE_ENV ==='production',
+            sameSite: 'strict',
+            maxAge: 7*24*60*60*1000
+
+        })
+
+        res.status(200).json({
+            message:'user login successfully',
             accesstoken,
             user:{
                 id:user._id,
