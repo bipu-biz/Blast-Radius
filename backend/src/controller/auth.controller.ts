@@ -3,6 +3,7 @@ import User from '../models/user.model'
 import apiError from '../utils/apiError'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import { generateAccessToken, generateRefreshToken } from '../utils/generateToken'
 
 export const register = async(req:Request,res:Response,next:NextFunction)=>{
     try{
@@ -25,15 +26,20 @@ export const register = async(req:Request,res:Response,next:NextFunction)=>{
             password:hashedpassword
         })
 
-        const token = jwt.sign(
-            {userId:user._id},
-            process.env.JWT_SECRET as string,
-            {expiresIn: '7d'}
-        )
+        const accesstoken = generateAccessToken(user._id.toString())
+        const refreshtoken = generateRefreshToken(user._id.toString())
+
+        res.cookie('refreshtoken',refreshtoken,{
+            httpOnly:true,
+            secure:process.env.NODE_ENV ==='production',
+            sameSite: 'strict',
+            maxAge: 7*24*60*60*1000
+
+        })
 
         res.status(201).json({
             message:'user registered successfully',
-            token,
+            accesstoken,
             user:{
                 id:user._id,
                 name:user.name,
