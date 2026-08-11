@@ -59,7 +59,7 @@ export const login = async(req:Request,res:Response,next:NextFunction)=>{
     try{
         const{email,password}=req.body
         if(!email || !password){
-            return new apiError(401,'email,password are required')
+            throw new apiError(401,'email,password are required')
         }
 
         const user = await User.findOne({email}).select('+password')
@@ -100,3 +100,25 @@ export const login = async(req:Request,res:Response,next:NextFunction)=>{
         next(error)
     }
 }
+
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      throw new apiError(401, 'unauthorized');
+    }
+
+    await User.findByIdAndUpdate(req.user._id, {
+      refreshToken: null,
+    });
+
+    res.clearCookie('accesstoken');
+    res.clearCookie('refreshtoken');
+
+    res.status(200).json({
+      success: true,
+      message: 'logout successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
