@@ -122,3 +122,29 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
     next(error);
   }
 };
+
+
+export const refreshtoken = async(req:Request,res:Response,next:NextFunction)=>{
+    try{
+        const incomingrefreshtoken = req.cookies?.refreshtoken
+        if(!incomingrefreshtoken){
+            throw new apiError(401 ,'no refresh token')
+        }
+
+        const decoded = jwt.verify(incomingrefreshtoken,process.env.REFRESH_TOKEN_SECRET as string) as { _id: string }
+
+        const user = await User.findById(decoded._id)
+        if(!user||user.refreshToken!==incomingrefreshtoken){
+            throw new apiError(401 , 'invalid refresh token')
+        }
+
+        const newAccessToken = generateAccessToken(user._id.toString())
+        res.status(200).json({
+            success:true,
+            accesstoken:newAccessToken
+        })
+    }
+    catch(error){
+        next(error)
+    }
+}
