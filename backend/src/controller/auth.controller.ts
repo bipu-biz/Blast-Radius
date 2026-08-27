@@ -39,6 +39,12 @@ export const register = async(req:Request,res:Response,next:NextFunction)=>{
             maxAge: 7*24*60*60*1000
 
         })
+        res.cookie('accesstoken', accesstoken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000,
+        }); 
 
         res.status(201).json({
             message:'user registered successfully',
@@ -85,6 +91,12 @@ export const login = async(req:Request,res:Response,next:NextFunction)=>{
             maxAge: 7*24*60*60*1000
 
         })
+        res.cookie('accesstoken', accesstoken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 15 * 60 * 1000,
+        });
 
         res.status(200).json({
             message:'user login successfully',

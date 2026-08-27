@@ -1,0 +1,87 @@
+import { Request, Response, NextFunction } from "express";
+import axios from "axios";
+import crypto from "crypto";
+import apiError from "../utils/apiError";
+import User from "../models/user.model";
+import Repo from "../models/repo.model";
+
+export const listAvailableRepos = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      throw new apiError(401, 'unauthorized');
+    }
+
+    const user = await User.findById(req.user._id).select('+githubaccesstoken');
+    if (!user?.githubaccesstoken) {
+      throw new apiError(400, 'github account not connected');
+    }
+
+    const response = await axios.get('https://api.github.com/user/repos', {
+      headers: {
+        Authorization: `Bearer ${user.githubaccesstoken}`,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      repos: response.data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const connectRepo = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      throw new apiError(401, 'unauthorized');
+    }
+
+    const { owner, name, githubRepoId, defaultBranch } = req.body;
+
+    const user = await User.findById(req.user._id).select('+githubaccesstoken');
+    if (!user?.githubaccesstoken) {
+      throw new apiError(400, 'github account not connected');
+    }
+
+    const webhookSecret = crypto.randomBytes(32).toString('hex');
+
+    const webhookResponse = await axios.post(
+      `https://api.github.com/repos/${owner}/${name}/hooks`,
+      {
+        name: 'web',
+        active: true,
+        events: ['pull_request'],
+        config: {
+          url: `${process.env.BACKEND_URL}/api/webhooks/github`,
+          content_type: 'json',
+          secret: webhookSecret,
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${user.githubaccesstoken}`,
+        },
+      }
+    );
+
+    const repo = await Repo.create({
+      userId: user._id,
+      owner,
+      name,
+      fullName: `${owner}/${name}`,
+      githubRepoId,
+      webhookId: webhookResponse.data.id,
+      webhookSecret,
+      defaultBranch: defaultBranch || 'main',
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'repo connected successfully',
+      repo,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

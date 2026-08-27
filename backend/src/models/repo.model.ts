@@ -17,7 +17,7 @@ const repo = new Schema({
         required:[true,'repo name is required']
     },
 
-    fullname:{
+    fullName:{
         type:String,
         required:[true,'fullname is required'],
         unique:true
