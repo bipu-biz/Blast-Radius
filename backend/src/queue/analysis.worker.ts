@@ -1,6 +1,16 @@
 import { Worker } from "bullmq";
 import connection from "./connection";
 import PRAnalysis from "../models/PRanalysis.modlel";
+import GraphSnapshot from "../models/graphsnapshot.model";
+import { cloneRepo, cleanupClone } from "../services/clone.service";
+import {
+  getAllSourceFiles,
+  extractImports,
+  buildDependencyGraph,
+  computeBlastRadius,
+} from "../services/parser.service";
+import User from "../models/user.model";
+import Repo from "../models/repo.model";
 
 interface AnalysisJobData {
   analysisId: string;
@@ -8,24 +18,67 @@ interface AnalysisJobData {
   owner: string;
   name: string;
   headSha: string;
+  changedFiles: string[];
 }
 
 const worker = new Worker<AnalysisJobData>(
   "pr-analysis",
   async (job) => {
-    const { analysisId, owner, name, headSha } = job.data;
-
-    console.log(`processing analysis ${analysisId} for ${owner}/${name} @ ${headSha}`);
+    const { analysisId, repoId, owner, name, headSha, changedFiles } = job.data;
 
     await PRAnalysis.findByIdAndUpdate(analysisId, {
       status: "cloning",
     });
 
-    await PRAnalysis.findByIdAndUpdate(analysisId, {
-      status: "complete",
-    });
+    const repoDoc = await Repo.findById(repoId);
+    if (!repoDoc) throw new Error("repo not found");
 
-    console.log(`finished analysis ${analysisId}`);
+    const userDoc = await User.findById(repoDoc.userId).select('+githubaccesstoken');
+    if (!userDoc?.githubaccesstoken) throw new Error("github token not found");
+
+    let clonedPath: string | null = null;
+
+    try {
+      clonedPath = await cloneRepo({
+        owner,
+        name,
+        headSha,
+        githubAccessToken: userDoc.githubaccesstoken,
+      });
+
+      await PRAnalysis.findByIdAndUpdate(analysisId, {
+        status: "parsing",
+      });
+
+      const files = getAllSourceFiles(clonedPath);
+      const fileImports = extractImports(files);
+      const graph = buildDependencyGraph(clonedPath, fileImports);
+
+      const graphSnapshot = await GraphSnapshot.create({
+        repoId,
+        sha: headSha,
+        nodes: graph.nodes,
+        edges: graph.edges,
+      });
+
+      await PRAnalysis.findByIdAndUpdate(analysisId, {
+        status: "analyzing",
+        graphSnapshotId: graphSnapshot._id,
+      });
+
+      const affectedNodes = computeBlastRadius(graph, changedFiles);
+      const riskScore = affectedNodes.reduce((sum, n) => sum + n.riskWeight, 0);
+
+      await PRAnalysis.findByIdAndUpdate(analysisId, {
+        affectedNodes,
+        riskScore,
+        status: "complete",
+      });
+    } finally {
+      if (clonedPath) {
+        cleanupClone(clonedPath);
+      }
+    }
   },
   {
     connection,
