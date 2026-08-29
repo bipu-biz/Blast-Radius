@@ -46,24 +46,30 @@ export const connectRepo = async (req: Request, res: Response, next: NextFunctio
 
     const webhookSecret = crypto.randomBytes(32).toString('hex');
 
-    const webhookResponse = await axios.post(
-      `https://api.github.com/repos/${owner}/${name}/hooks`,
-      {
-        name: 'web',
-        active: true,
-        events: ['pull_request'],
-        config: {
-          url: `${process.env.BACKEND_URL}/api/webhooks/github`,
-          content_type: 'json',
-          secret: webhookSecret,
+    let webhookResponse;
+    try {
+      webhookResponse = await axios.post(
+        `https://api.github.com/repos/${owner}/${name}/hooks`,
+        {
+          name: 'web',
+          active: true,
+          events: ['pull_request'],
+          config: {
+            url: `${process.env.BACKEND_URL}/api/webhooks/github`,
+            content_type: 'json',
+            secret: webhookSecret,
+          },
         },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${user.githubaccesstoken}`,
-        },
-      }
-    );
+        {
+          headers: {
+            Authorization: `Bearer ${user.githubaccesstoken}`,
+          },
+        }
+      );
+    } catch (err: any) {
+      console.log('GITHUB REJECTED:', JSON.stringify(err.response?.data));
+      throw err;
+    }
 
     const repo = await Repo.create({
       userId: user._id,
