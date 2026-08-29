@@ -26,6 +26,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.4",
     "simple-git": "^3.36.0",
+    "socket.io": "^4.8.3",
     "ts-morph": "^28.0.0"
   },
   "devDependencies": {

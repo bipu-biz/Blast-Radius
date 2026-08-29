@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
+import axios from "axios";
 import apiError from "../utils/apiError";
 import Repo from "../models/repo.model";
-import PRAnalysis from "../models/PRanalysis.modlel";
+import PRAnalysis from "../models/PRanalysis.model";
+import User from "../models/user.model";
 import { analysisQueue } from "../queue/analysis.queue";
 
 export const githubWebhook = async (req: Request, res: Response, next: NextFunction) => {
@@ -55,12 +57,28 @@ export const githubWebhook = async (req: Request, res: Response, next: NextFunct
       return res.status(200).json({ message: 'action ignored' });
     }
 
+    const userDoc = await User.findById(repo.userId).select('+githubaccesstoken');
+    if (!userDoc?.githubaccesstoken) {
+      throw new apiError(400, 'github token not found for repo owner');
+    }
+
+    const filesResponse = await axios.get(
+      `https://api.github.com/repos/${repo.owner}/${repo.name}/pulls/${pull_request.number}/files`,
+      {
+        headers: {
+          Authorization: `Bearer ${userDoc.githubaccesstoken}`,
+        },
+      }
+    );
+
+    const changedFiles: string[] = filesResponse.data.map((f: any) => f.filename);
+
     const analysis = await PRAnalysis.create({
       repoId: repo._id,
       prNumber: pull_request.number,
       headSha: pull_request.head.sha,
       status: 'queued',
-      changedFiles: [],
+      changedFiles,
     });
 
     await analysisQueue.add("analyze-pr", {
@@ -69,6 +87,7 @@ export const githubWebhook = async (req: Request, res: Response, next: NextFunct
       owner: repo.owner,
       name: repo.name,
       headSha: pull_request.head.sha,
+      changedFiles,
     });
 
     res.status(200).json({
