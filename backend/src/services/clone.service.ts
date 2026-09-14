@@ -18,9 +18,10 @@ export const cloneRepo = async ({ owner, name, headSha, githubAccessToken }: Clo
 
   const git = simpleGit();
 
-  await git.clone(authenticatedUrl, tmpDir, ["--depth", "50"]);
+  await git.clone(authenticatedUrl, tmpDir);
 
   const repoGit = simpleGit(tmpDir);
+  await repoGit.fetch(["origin", headSha]);
   await repoGit.checkout(headSha);
 
   return tmpDir;

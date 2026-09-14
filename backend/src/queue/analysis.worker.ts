@@ -95,6 +95,7 @@ const worker = new Worker<AnalysisJobData>(
         }
       }
     } catch (error: any) {
+      console.log('WORKER ERROR DETAILS:', error.message, error.response?.data || '');
       await PRAnalysis.findByIdAndUpdate(analysisId, {
         status: "failed",
         errorMessage: error.message,
