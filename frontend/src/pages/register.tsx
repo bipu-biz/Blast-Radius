@@ -34,7 +34,10 @@ const Register = () => {
   return (
     <div className="min-h-screen flex bg-[#0D1012] text-[#EDEBE6]" style={{ fontFamily: "Inter, sans-serif" }}>
       <div className="hidden md:flex flex-col justify-between w-1/2 p-12 border-r border-[#262C30]">
-        <div style={{ fontFamily: "'Space Grotesk', sans-serif" }} className="text-xl font-medium tracking-tight">
+        <div
+          className="text-2xl cursor-pointer transition-transform duration-300 hover:scale-[1.03]"
+          style={{ fontFamily: "'Righteous', sans-serif" }}
+        >
           Blast Radius
         </div>
         <div className="flex flex-col gap-8">

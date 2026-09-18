@@ -1,3 +1,4 @@
+import cors from "cors";
 import express, { Application, Request, Response } from 'express'
 import authroutes from './routes/auth.route'
 import cookieParser from 'cookie-parser';
@@ -6,6 +7,11 @@ import webhookRoutes from './routes/webhook.route';
 import githubRoutes from './routes/github.route';
 
 const app:Application= express()
+
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true,
+}));
 
 app.use('/api/webhooks/github', express.raw({ type: 'application/json' }));
 
