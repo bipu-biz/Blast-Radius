@@ -4,6 +4,7 @@ import crypto from "crypto";
 import apiError from "../utils/apiError";
 import User from "../models/user.model";
 import Repo from "../models/repo.model";
+import PRAnalysis from "../models/PRanalysis.model";
 
 export const listAvailableRepos = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -86,6 +87,48 @@ export const connectRepo = async (req: Request, res: Response, next: NextFunctio
       success: true,
       message: 'repo connected successfully',
       repo,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const listConnectedRepos = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      throw new apiError(401, 'unauthorized');
+    }
+
+    const repos = await Repo.find({ userId: req.user._id }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      repos,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getRepoAnalyses = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      throw new apiError(401, 'unauthorized');
+    }
+
+    const { repoId } = req.params;
+
+    const repo = await Repo.findOne({ _id: repoId, userId: req.user._id });
+    if (!repo) {
+      throw new apiError(404, 'repo not found');
+    }
+
+    const analyses = await PRAnalysis.find({ repoId }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      repo,
+      analyses,
     });
   } catch (error) {
     next(error);
