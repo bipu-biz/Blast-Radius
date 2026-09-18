@@ -5,6 +5,7 @@ import apiError from "../utils/apiError";
 import User from "../models/user.model";
 import Repo from "../models/repo.model";
 import PRAnalysis from "../models/PRanalysis.model";
+import GraphSnapshot from "../models/graphsnapshot.model";
 
 export const listAvailableRepos = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -129,6 +130,39 @@ export const getRepoAnalyses = async (req: Request, res: Response, next: NextFun
       success: true,
       repo,
       analyses,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAnalysisById = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      throw new apiError(401, 'unauthorized');
+    }
+
+    const { analysisId } = req.params;
+
+    const analysis = await PRAnalysis.findById(analysisId);
+    if (!analysis) {
+      throw new apiError(404, 'analysis not found');
+    }
+
+    const repo = await Repo.findOne({ _id: analysis.repoId, userId: req.user._id });
+    if (!repo) {
+      throw new apiError(403, 'forbidden');
+    }
+
+    const graph = analysis.graphSnapshotId
+      ? await GraphSnapshot.findById(analysis.graphSnapshotId)
+      : null;
+
+    res.status(200).json({
+      success: true,
+      analysis,
+      graph,
+      repoName: repo.fullName,
     });
   } catch (error) {
     next(error);
