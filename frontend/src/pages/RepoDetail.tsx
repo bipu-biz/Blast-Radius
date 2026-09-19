@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 import { useParams, useNavigate, Link } from "react-router-dom";
 
 interface Analysis {
@@ -17,7 +17,6 @@ const RepoDetail = () => {
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const token = localStorage.getItem("accessToken");
 
   useEffect(() => {
     fetchAnalyses();
@@ -25,10 +24,7 @@ const RepoDetail = () => {
 
   const fetchAnalyses = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/repos/${repoId}/analyses`, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
-      });
+      const res = await api.get(`/repos/${repoId}/analyses`);
       setRepoName(res.data.repo.fullName);
       setAnalyses(res.data.analyses || []);
     } catch (err) {
@@ -47,9 +43,12 @@ const RepoDetail = () => {
   return (
     <div className="min-h-screen bg-[#0D1012] text-[#EDEBE6]" style={{ fontFamily: "Inter, sans-serif" }}>
       <header className="border-b border-[#262C30] px-8 py-4">
-        <Link to="/dashboard" style={{ fontFamily: "'Space Grotesk', sans-serif" }} className="text-lg font-medium tracking-tight">
+        <div
+          className="text-2xl cursor-pointer transition-transform duration-300 hover:scale-[1.03]"
+          style={{ fontFamily: "'Righteous', sans-serif" }}
+        >
           Blast Radius
-        </Link>
+        </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-8 py-12">

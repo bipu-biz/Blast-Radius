@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 import { useParams, Link } from "react-router-dom";
 import ReactFlow, { Background } from "reactflow";
 import type { Node, Edge } from "reactflow";
@@ -25,7 +25,6 @@ const AnalysisDetail = () => {
   const [graph, setGraph] = useState<GraphData | null>(null);
   const [repoName, setRepoName] = useState("");
   const [loading, setLoading] = useState(true);
-  const token = localStorage.getItem("accessToken");
 
   useEffect(() => {
     fetchAnalysis();
@@ -33,10 +32,7 @@ const AnalysisDetail = () => {
 
   const fetchAnalysis = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/analyses/${analysisId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
-      });
+      const res = await api.get(`/analyses/${analysisId}`);
       setAnalysis(res.data.analysis);
       setGraph(res.data.graph);
       setRepoName(res.data.repoName);
@@ -93,9 +89,12 @@ const AnalysisDetail = () => {
   return (
     <div className="min-h-screen bg-[#0D1012] text-[#EDEBE6]" style={{ fontFamily: "Inter, sans-serif" }}>
       <header className="border-b border-[#262C30] px-8 py-4">
-        <Link to="/dashboard" style={{ fontFamily: "'Space Grotesk', sans-serif" }} className="text-lg font-medium tracking-tight">
+        <div
+          className="text-2xl cursor-pointer transition-transform duration-300 hover:scale-[1.03]"
+          style={{ fontFamily: "'Righteous', sans-serif" }}
+        >
           Blast Radius
-        </Link>
+        </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-8 py-12">

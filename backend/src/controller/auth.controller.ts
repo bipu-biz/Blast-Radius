@@ -35,14 +35,14 @@ export const register = async(req:Request,res:Response,next:NextFunction)=>{
         res.cookie('refreshtoken',refreshtoken,{
             httpOnly:true,
             secure:process.env.NODE_ENV ==='production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: 7*24*60*60*1000
 
         })
         res.cookie('accesstoken', accesstoken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: 15 * 60 * 1000,
         }); 
 
@@ -87,14 +87,14 @@ export const login = async(req:Request,res:Response,next:NextFunction)=>{
         res.cookie('refreshtoken',refreshtoken,{
             httpOnly:true,
             secure:process.env.NODE_ENV ==='production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: 7*24*60*60*1000
 
         })
         res.cookie('accesstoken', accesstoken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: 15 * 60 * 1000,
         });
 

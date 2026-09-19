@@ -12,44 +12,42 @@ export const githubConnect = (req:Request,res:Response)=>{
     res.redirect(githubAuthUrl)
 }
 
-export const githubCallback = async(req:Request,res:Response,next:NextFunction)=>{
-    try{
-        const {code}= req.query;
+export const githubCallback = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { code } = req.query;
 
-        if(!code){
-            throw new apiError(400,'no cdoe provided by github')
-        }
-        const tokenResponse = await axios.post(
-            'https://github.com/login/oauth/access_token',
-            {
-                client_id: process.env.GITHUB_CLIENT_ID,
-                client_secret: process.env.GITHUB_CLIENT_SECRET,
-                code
-            },
-            {
-                headers:{Accept:'application/json'}
-            }
-        )
+    if (!code) {
+      throw new apiError(400, 'no code provided by github');
+    }
 
-        const githubAccessToken = tokenResponse.data.access_token
+    const tokenResponse = await axios.post(
+      'https://github.com/login/oauth/access_token',
+      {
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code,
+      },
+      {
+        headers: { Accept: 'application/json' },
+      }
+    );
 
-        if(!githubAccessToken){
-            throw new apiError(400,'failed to get access token from github')
-        }
-        if (!req.user) {
-      throw new apiError(401, "unauthorized");
+    const githubAccessToken = tokenResponse.data.access_token;
+
+    if (!githubAccessToken) {
+      throw new apiError(400, 'failed to get access token from github');
+    }
+
+    if (!req.user) {
+      throw new apiError(401, 'unauthorized');
     }
 
     await User.findByIdAndUpdate(req.user._id, {
       githubaccesstoken: githubAccessToken,
     });
 
-    res.status(200).json({
-      success: true,
-      message: "github account connected successfully",
-    });
-    }
-    catch (error) {
+    res.redirect("http://localhost:5173/dashboard");
+  } catch (error) {
     next(error);
   }
-}
+};

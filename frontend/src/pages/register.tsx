@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
 import GraphVisual from "../components/GraphVisual";
 
@@ -17,11 +17,7 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        { name, email, password },
-        { withCredentials: true }
-      );
+      const response = await api.post("/auth/register", { name, email, password });
       localStorage.setItem("accessToken", response.data.accesstoken);
       navigate("/dashboard");
     } catch (err: any) {
