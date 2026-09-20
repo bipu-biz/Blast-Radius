@@ -151,6 +151,14 @@ export const refreshtoken = async(req:Request,res:Response,next:NextFunction)=>{
         }
 
         const newAccessToken = generateAccessToken(user._id.toString())
+
+        res.cookie('accesstoken', newAccessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 24 * 60 * 60 * 1000,
+        });
+
         res.status(200).json({
             success:true,
             accesstoken:newAccessToken

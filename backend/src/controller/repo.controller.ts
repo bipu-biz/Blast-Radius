@@ -168,3 +168,36 @@ export const getAnalysisById = async (req: Request, res: Response, next: NextFun
     next(error);
   }
 };
+
+export const disconnectRepo = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      throw new apiError(401, 'unauthorized');
+    }
+
+    const { repoId } = req.params;
+    const repo = await Repo.findOne({ _id: repoId, userId: req.user._id }).select('+webhookSecret');
+    if (!repo) {
+      throw new apiError(404, 'repo not found');
+    }
+
+    const userDoc = await User.findById(req.user._id).select('+githubaccesstoken');
+
+    if (userDoc?.githubaccesstoken && repo.webhookId) {
+      try {
+        await axios.delete(
+          `https://api.github.com/repos/${repo.owner}/${repo.name}/hooks/${repo.webhookId}`,
+          { headers: { Authorization: `Bearer ${userDoc.githubaccesstoken}` } }
+        );
+      } catch (err) {
+        
+      }
+    }
+
+    await Repo.findByIdAndDelete(repoId);
+
+    res.status(200).json({ success: true, message: 'repo disconnected' });
+  } catch (error) {
+    next(error);
+  }
+};

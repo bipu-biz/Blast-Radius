@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { githubConnect, githubCallback } from '../controller/github.controller';
-import { isloggedin } from '../middleware/auth.middleware';
+import { ensureValidSession } from '../middleware/auth.middleware';
 
 const router = Router();
 
-router.get('/connect', isloggedin, githubConnect);
-router.get('/callback', isloggedin, githubCallback);
+router.get('/connect', ensureValidSession, githubConnect);
+router.get('/callback', ensureValidSession, githubCallback);
 
 export default router;

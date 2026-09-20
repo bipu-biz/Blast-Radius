@@ -46,10 +46,9 @@ const Dashboard = () => {
     }
   };
 
-  const connectGithub = async () => {
-    await api.get("/repos");
-    window.location.href = "http://localhost:5000/api/github/connect";
-  };
+  const connectGithub = () => {
+  window.location.href = "http://localhost:5000/api/github/connect";
+};
 
   const openRepoPicker = async () => {
     try {
@@ -76,6 +75,17 @@ const Dashboard = () => {
       setError(err.response?.data?.message || "Failed to connect repo");
     } finally {
       setConnecting(null);
+    }
+  };
+
+  const handleDisconnect = async (repoId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Disconnect this repo?")) return;
+    try {
+      await api.delete(`/repos/${repoId}`);
+      fetchRepos();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to disconnect repo");
     }
   };
 
@@ -158,7 +168,15 @@ const Dashboard = () => {
                   <span className="w-1.5 h-1.5 rounded-full bg-[#4FD1C5]" />
                   <span className="text-sm">{repo.fullName}</span>
                 </div>
-                <span className="text-xs text-[#5C646B]">{repo.defaultBranch}</span>
+                <div className="flex items-center gap-4">
+                  <span className="text-xs text-[#5C646B]">{repo.defaultBranch}</span>
+                  <button
+                    onClick={(e) => handleDisconnect(repo._id, e)}
+                    className="text-xs text-[#FF6A39] hover:underline"
+                  >
+                    Disconnect
+                  </button>
+                </div>
               </div>
             ))}
           </div>

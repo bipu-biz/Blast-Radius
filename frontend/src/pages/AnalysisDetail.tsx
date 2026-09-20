@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
-import { useParams, Link } from "react-router-dom";
+import { useParams} from "react-router-dom";
 import ReactFlow, { Background } from "reactflow";
 import type { Node, Edge } from "reactflow";
 import "reactflow/dist/style.css";
