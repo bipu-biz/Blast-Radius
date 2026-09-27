@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
-import { useParams} from "react-router-dom";
+import { useParams } from "react-router-dom";
 import ReactFlow, { Background } from "reactflow";
 import type { Node, Edge } from "reactflow";
 import "reactflow/dist/style.css";
+import { io } from "socket.io-client";
 
 interface AnalysisData {
   status: string;
@@ -28,6 +29,21 @@ const AnalysisDetail = () => {
 
   useEffect(() => {
     fetchAnalysis();
+  }, [analysisId]);
+
+  useEffect(() => {
+    if (!analysisId) return;
+
+    const socket = io("http://localhost:5000");
+    socket.emit("join-analysis", analysisId);
+
+    socket.on("analysis:progress", (data) => {
+      setAnalysis((prev) => (prev ? { ...prev, ...data } : prev));
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, [analysisId]);
 
   const fetchAnalysis = async () => {
