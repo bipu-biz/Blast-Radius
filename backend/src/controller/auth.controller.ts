@@ -4,6 +4,7 @@ import apiError from '../utils/apiError'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { generateAccessToken, generateRefreshToken } from '../utils/generateToken'
+import { baseCookieOptions } from "../utils/config";
 
 export const register = async(req:Request,res:Response,next:NextFunction)=>{
     try{
@@ -33,16 +34,12 @@ export const register = async(req:Request,res:Response,next:NextFunction)=>{
         await user.save()
 
         res.cookie('refreshtoken',refreshtoken,{
-            httpOnly:true,
-            secure:process.env.NODE_ENV ==='production',
-            sameSite: 'lax',
+            ...baseCookieOptions,
             maxAge: 7*24*60*60*1000
 
         })
         res.cookie('accesstoken', accesstoken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            ...baseCookieOptions,
             maxAge: 15 * 60 * 1000,
         }); 
 
@@ -85,16 +82,12 @@ export const login = async(req:Request,res:Response,next:NextFunction)=>{
         await user.save()
 
         res.cookie('refreshtoken',refreshtoken,{
-            httpOnly:true,
-            secure:process.env.NODE_ENV ==='production',
-            sameSite: 'lax',
+            ...baseCookieOptions,
             maxAge: 7*24*60*60*1000
 
         })
         res.cookie('accesstoken', accesstoken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            ...baseCookieOptions,
             maxAge: 15 * 60 * 1000,
         });
 
@@ -123,8 +116,8 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
       refreshToken: null,
     });
 
-    res.clearCookie('accesstoken');
-    res.clearCookie('refreshtoken');
+    res.clearCookie('accesstoken', baseCookieOptions);
+    res.clearCookie('refreshtoken', baseCookieOptions);
 
     res.status(200).json({
       success: true,
@@ -153,9 +146,7 @@ export const refreshtoken = async(req:Request,res:Response,next:NextFunction)=>{
         const newAccessToken = generateAccessToken(user._id.toString())
 
         res.cookie('accesstoken', newAccessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            ...baseCookieOptions,
             maxAge: 24 * 60 * 60 * 1000,
         });
 

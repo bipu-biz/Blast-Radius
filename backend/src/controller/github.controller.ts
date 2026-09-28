@@ -2,6 +2,7 @@ import {Request,Response, NextFunction } from "express"
 import axios from "axios";
 import apiError from "../utils/apiError"
 import User from "../models/user.model"
+import { FRONTEND_URL } from "../utils/config";
 
 export const githubConnect = (req:Request,res:Response)=>{
     const redirectUri = process.env.GITHUB_CALLBACK_URL as string
@@ -46,7 +47,7 @@ export const githubCallback = async (req: Request, res: Response, next: NextFunc
       githubaccesstoken: githubAccessToken,
     });
 
-    res.redirect("http://localhost:5173/dashboard");
+    res.redirect(`${FRONTEND_URL}/dashboard`);
   } catch (error) {
     next(error);
   }

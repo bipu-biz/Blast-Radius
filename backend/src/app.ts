@@ -1,4 +1,5 @@
 import cors from "cors";
+import { FRONTEND_URL } from "./utils/config";
 import express, { Application, Request, Response } from 'express'
 import authroutes from './routes/auth.route'
 import cookieParser from 'cookie-parser';
@@ -10,7 +11,7 @@ import analysisRoutes from './routes/analysis.route';
 const app:Application= express()
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: FRONTEND_URL,
   credentials: true,
 }));
 
