@@ -47,7 +47,7 @@ const Dashboard = () => {
   };
 
   const connectGithub = () => {
-  window.location.href = "http://localhost:5000/api/github/connect";
+  window.location.href = `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/github/connect`;
 };
 
   const openRepoPicker = async () => {

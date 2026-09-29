@@ -34,7 +34,7 @@ const AnalysisDetail = () => {
   useEffect(() => {
     if (!analysisId) return;
 
-    const socket = io("http://localhost:5000");
+    const socket = io(import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000");
     socket.emit("join-analysis", analysisId);
 
     socket.on("analysis:progress", (data) => {
